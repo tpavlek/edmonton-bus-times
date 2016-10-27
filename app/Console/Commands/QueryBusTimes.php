@@ -93,6 +93,7 @@ class QueryBusTimes extends Command
                     'batch_id' => $batch->id,
                     'route' => $route,
                     'vehicle_id' => $vehicle_id,
+                    'trip_id' => $entity->id,
                     'delay' => $delayTime,
                 ], $positions->positionFor($vehicle_id));
             }

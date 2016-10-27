@@ -33,6 +33,7 @@ class InitBusTable extends Migration
             $table->string('route');
             $table->integer('vehicle_id');
             $table->integer('delay');
+            $table->integer('trip_id');
 
             $table->timestamps();
         });
