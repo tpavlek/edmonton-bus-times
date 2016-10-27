@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Model\Batch;
 use App\VehiclePositions;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -48,6 +49,8 @@ class QueryBusTimes extends Command
 
         $vehicles = [];
 
+        $batch = Batch::init();
+
         foreach($feed->getEntityList() as $entity) {
 
             if ($entity->hasTripUpdate()) {
@@ -87,6 +90,7 @@ class QueryBusTimes extends Command
 
                 $vehicles[] = array_merge([
                     'id' => Uuid::uuid4(),
+                    'batch_id' => $batch->id,
                     'route' => $route,
                     'vehicle_id' => $vehicle_id,
                     'delay' => $delayTime,
