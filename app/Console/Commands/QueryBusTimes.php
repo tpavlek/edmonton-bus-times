@@ -95,6 +95,8 @@ class QueryBusTimes extends Command
                     'vehicle_id' => $vehicle_id,
                     'trip_id' => $entity->id,
                     'delay' => $delayTime,
+                    'created_at' => Carbon::now()->toDateTimeString(),
+                    'updated_at' => Carbon::now()->toDateTimeString(),
                 ], $positions->positionFor($vehicle_id));
             }
         }
