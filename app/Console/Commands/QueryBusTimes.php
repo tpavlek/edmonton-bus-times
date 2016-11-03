@@ -102,5 +102,8 @@ class QueryBusTimes extends Command
         }
 
         \DB::table('bus_times')->insert($vehicles);
+        $vehicleCount = count($vehicles);
+        $this->output->writeln("<info>Inserted {$vehicleCount} records!</info>");
+
     }
 }
