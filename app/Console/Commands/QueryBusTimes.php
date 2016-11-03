@@ -41,15 +41,19 @@ class QueryBusTimes extends Command
      */
     public function handle()
     {
-        $positions = new \App\VehiclePositions();
+        $batch = Batch::init();
+
+        $positions = new \App\VehiclePositions($batch->id);
+
 
         $data = file_get_contents('https://data.edmonton.ca/download/uzpc-8bnm/application%2Foctet-stream');
+        file_put_contents(storage_path() . '/update-files/' . Carbon::now()->timestamp . "-" . $batch->id . "-updates.pb", $data);
         $feed = new \transit_realtime\FeedMessage();
         $feed->parse($data);
 
         $vehicles = [];
 
-        $batch = Batch::init();
+
 
         foreach($feed->getEntityList() as $entity) {
 

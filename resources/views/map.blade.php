@@ -36,14 +36,6 @@
             mapTypeId: 'roadmap'
         });
 
-
-
-        var onTimeCoords = [
-        ];
-
-        var earlyCoords = [
-        ];
-
         var flightPath = new google.maps.Polyline({
             path: window.times.ontime,
             geodesic: true,

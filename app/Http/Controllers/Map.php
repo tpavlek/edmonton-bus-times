@@ -11,7 +11,11 @@ class Map extends Controller
     {
         $javascript = \App::make('JavaScript');
 
-        $records = VehicleRecord::query()->where('trip_id', '=', $trip_id)->get();
+        $records = VehicleRecord::query()->where('trip_id', '=', $trip_id)->orderBy('created_at')->get();
+        /*$vehicle_id = $records->first()->vehicle_id;
+        $records = $records->filter(function ($record) use ($vehicle_id) {
+            return $record->vehicle_id == $vehicle_id;
+        });*/
         $last = [];
         $times = $records->reduce(function ($carry, VehicleRecord $record) use (&$last) {
             if (!empty($last) && $last['key'] != $record->status()) {
