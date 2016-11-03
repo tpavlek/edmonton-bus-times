@@ -47,7 +47,7 @@
         var flightPath = new google.maps.Polyline({
             path: window.times.ontime,
             geodesic: true,
-            strokeColor: '#FF0000',
+            strokeColor: '#1e7005', // Green is for ontime
             strokeOpacity: 1.0,
             strokeWeight: 2
         });
@@ -55,13 +55,22 @@
         var earlyMap = new google.maps.Polyline({
             path: window.times.early,
             geodesic: true,
-            strokeColor: '#000000',
+            strokeColor: '#68c1b7', // Cyan is early
+            strokeOpacity: 1.0,
+            strokeWeight: 2
+        });
+
+        var lateMap = new google.maps.Polyline({
+            path: window.times.late,
+            geodesic: true,
+            strokeColor: '#af180e', // Red is late
             strokeOpacity: 1.0,
             strokeWeight: 2
         });
 
         flightPath.setMap(map);
         earlyMap.setMap(map);
+        lateMap.setMap(map);
     }
 </script>
 
