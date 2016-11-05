@@ -15,31 +15,35 @@ class Map extends Controller
 
         $javascript = \App::make('JavaScript');
 
-        $recordQuery = VehicleRecord::query()->where('trip_id', '=', $trip_id);
-        if (!is_null($vehicle_id)) {
-            $recordQuery = $recordQuery->where('vehicle_id', $vehicle_id);
-        }
+        $results = \DB::table('bus_times')
+            ->join('stops', 'stops.id', '=', 'bus_times.stop_id')
+            ->where('trip_id', [ $trip_id, $trip_id + 1])
+            ->orderBy('created_at')
+            ->get();
 
-        $records = $recordQuery->orderBy('created_at')->get();
-        /*$vehicle_id = $records->first()->vehicle_id;
-        $records = $records->filter(function ($record) use ($vehicle_id) {
-            return $record->vehicle_id == $vehicle_id;
-        });*/
         $last = [];
-        $times = $records->reduce(function ($carry, VehicleRecord $record) use (&$last) {
-            if (!empty($last) && $last['key'] != $record->status()) {
-                $carry[$record->status()][] = $last['value'];
+        $times = $results->reduce(function ($carry, $record) use (&$last) {
+            if ($record->depart_delay < -60) {
+                $status = 'early';
+            } else if ($record->depart_delay > 60) {
+                $status = 'late';
+            } else {
+                $status = 'ontime';
+            }
+            if (!empty($last) && $last['key'] != $status) {
+                $carry[$status][] = $last['value'];
             }
 
-            $carry[$record->status()][] = [ 'lat' => $record->lat, 'lng' => $record->lon ];
-            $last = [ 'key' => $record->status(), 'value' =>  [ 'lat' => $record->lat, 'lng' => $record->lon ]];
+            $carry[$status][] = [ 'lat' => doubleval($record->lat), 'lng' => doubleval($record->lon) ];
+            $last = [ 'key' => $status, 'value' =>  [ 'lat' => doubleval($record->lat), 'lng' => doubleval($record->lon) ]];
 
             return $carry;
         }, ['ontime' => [], 'late' => [], 'early' => []]);
 
+
         $javascript->put([
             'times' => $times,
-            'center' => [ 'lat' => $records->first()->lat, 'lng' => $records->first()->lon ]
+            'center' => [ 'lat' => doubleval($results->first()->lat), 'lng' => doubleval($results->first()->lon) ]
         ]);
 
         return view('map')->with('times', $times);
