@@ -17,7 +17,7 @@ class Batch extends Model
     public static function init()
     {
         return static::create([
-            'id' => Uuid::uuid4()
+            'id' => Uuid::uuid4()->toString()
         ]);
     }
 

@@ -48,6 +48,11 @@ return [
             'root' => storage_path('app'),
         ],
 
+        'events' => [
+            'driver' => 'local',
+            'root' => '/home/ebon/files/'
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

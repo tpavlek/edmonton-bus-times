@@ -8,7 +8,7 @@
         /* Always set the map height explicitly to define the size of the div
          * element that contains the map. */
         #map {
-            height: 100%;
+            height: 100vh;
         }
         /* Optional: Makes the sample page fill the window. */
         html, body {
@@ -22,13 +22,6 @@
 <div id="map"></div>
 @include('footer')
 <script>
-
-    console.log(window.times);
-
-    // This example creates a 2-pixel-wide red polyline showing the path of William
-    // Kingsford Smith's first trans-Pacific flight between Oakland, CA, and
-    // Brisbane, Australia.
-
     function initMap() {
         var map = new google.maps.Map(document.getElementById('map'), {
             zoom: 14,

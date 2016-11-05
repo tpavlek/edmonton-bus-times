@@ -43,8 +43,6 @@ class QueryBusTimes extends Command
     {
         $batch = Batch::init();
 
-        $positions = new \App\VehiclePositions($batch->id);
-
 
         $data = file_get_contents('https://data.edmonton.ca/download/uzpc-8bnm/application%2Foctet-stream');
         file_put_contents(storage_path() . '/update-files/' . Carbon::now()->timestamp . "-" . $batch->id . "-updates.pb", $data);
@@ -53,18 +51,11 @@ class QueryBusTimes extends Command
 
         $vehicles = [];
 
-
-
         foreach($feed->getEntityList() as $entity) {
 
             if ($entity->hasTripUpdate()) {
                 $vehicle_id = $entity->getTripUpdate()->getVehicle()->getLabel();
                 $route = $entity->getTripUpdate()->getTrip()->route_id;
-
-                if (!$positions->isRealVehicle($vehicle_id, $entity->id)) {
-                    // If we're getting a trip update for a route that isn't running on a physical bus, it's not worth the cpu cycles.
-                    continue;
-                }
 
                 $delay = collect($entity->getTripUpdate()->getStopTimeUpdate())
                     ->filter(function (\transit_realtime\TripUpdate\StopTimeUpdate $stopTime) {

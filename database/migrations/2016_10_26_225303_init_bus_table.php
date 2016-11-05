@@ -28,11 +28,15 @@ class InitBusTable extends Migration
             $table->uuid('batch_id');
             $table->foreign('batch_id')->references('id')->on('batches');
 
-            $table->double('lat');
-            $table->double('lon');
             $table->string('route');
             $table->integer('vehicle_id');
-            $table->integer('delay');
+
+            $table->integer('arrival_delay')->nullable()->default(null);
+            $table->timestamp('arrival_at')->nullable()->default(null);
+            $table->integer('depart_delay')->nullable()->default(null);
+            $table->timestamp('depart_at')->nullable()->default(null);
+
+            $table->integer('stop_id');
             $table->integer('trip_id');
 
             $table->timestamps();

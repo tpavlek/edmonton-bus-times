@@ -21,7 +21,7 @@ class OnTime extends Controller
         $result = $db->table('bus_times')
             ->whereBetween('lat', $lat)
             ->whereBetween('lon', $lon)
-            ->whereBetween($db->raw('hour(created_at)'), [ 15, 18 ])
+            ->whereBetween($db->raw('hour(created_at)'), [ 4, 23 ])
             ->whereBetween($db->raw('dayofweek(created_at)'), [ 2, 6 ])
             ->select([
                 $db->raw('date(created_at) as day'),

@@ -3,15 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Model\VehicleRecord;
+use Illuminate\Http\Request;
 
 class Map extends Controller
 {
 
-    public function show($trip_id)
+    public function show($trip_id, Request $request)
     {
+
+        $vehicle_id = $request->get('vehicle_id', null);
+
         $javascript = \App::make('JavaScript');
 
-        $records = VehicleRecord::query()->where('trip_id', '=', $trip_id)->orderBy('created_at')->get();
+        $recordQuery = VehicleRecord::query()->where('trip_id', '=', $trip_id);
+        if (!is_null($vehicle_id)) {
+            $recordQuery = $recordQuery->where('vehicle_id', $vehicle_id);
+        }
+
+        $records = $recordQuery->orderBy('created_at')->get();
         /*$vehicle_id = $records->first()->vehicle_id;
         $records = $records->filter(function ($record) use ($vehicle_id) {
             return $record->vehicle_id == $vehicle_id;

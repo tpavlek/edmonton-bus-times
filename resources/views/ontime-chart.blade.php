@@ -6,7 +6,7 @@
     <title>Simple Polylines</title>
 </head>
 <body>
-<div id="container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+<div id="container" style="min-width: 310px; height: 100vh; margin: 0 auto"></div>
 @include('footer')
 
 <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>

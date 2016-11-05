@@ -3,26 +3,46 @@
 namespace App;
 
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
+use Ramsey\Uuid\Uuid;
+use transit_realtime\VehiclePosition\VehicleStopStatus;
 
 class VehiclePositions
 {
     /** @var \Illuminate\Support\Collection  */
     public $entites;
 
-    public function __construct($batch_id)
+    public function __construct(Collection $entityList)
     {
-        $data = file_get_contents('https://data.edmonton.ca/download/7qed-k2fc/application%2Foctet-stream');
-        file_put_contents(storage_path() . "/update-files/" . Carbon::now()->timestamp . "-" . $batch_id . "-positions.pb", $data);
-        $feed = new \transit_realtime\FeedMessage();
-        $feed->parse($data);
+        $this->entites = $entityList;
+    }
 
-        $this->entites = collect($feed->getEntityList());
+    public static function fromData($fileData)
+    {
+        $feed = new \transit_realtime\FeedMessage();
+        $feed->parse($fileData);
+
+        return new self(collect($feed->getEntityList()));
     }
 
     public function isRealVehicle($vehicle_id, $trip_id)
     {
         return $this->entites->contains(function($entity) use ($vehicle_id, $trip_id) {
             return $entity->id == $vehicle_id && $entity->getVehicle()->getTrip()->trip_id == $trip_id;
+        });
+    }
+
+    public function allPositions()
+    {
+        return $this->entites->map(function ($entity) {
+            return [
+                'id' => Uuid::uuid4()->toString(),
+                'vehicle_id' => $entity->id,
+                'timestamp' => Carbon::createFromTimestamp($entity->getVehicle()->timestamp)->toDateTimeString(),
+                'trip_id' => $entity->getVehicle()->getTrip()->trip_id,
+                'lat' => $entity->getVehicle()->getPosition()->getLatitude(),
+                'lon' => $entity->getVehicle()->getPosition()->getLongitude()
+            ];
         });
     }
 
