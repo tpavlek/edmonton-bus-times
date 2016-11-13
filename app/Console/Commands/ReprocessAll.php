@@ -79,17 +79,19 @@ class ReprocessAll extends Command
 
                 foreach($feed->getEntityList() as $entity) {
 
-                    // We only want to process a trip_id once.
-                    if ($foundTripIds->contains($entity->id)) {
-                        continue;
-                    }
-
-                    // Add it to the found trip Ids
-                    $foundTripIds->push($entity->id);
-
                     if ($entity->hasTripUpdate()) {
                         $vehicle_id = $entity->getTripUpdate()->getVehicle()->getLabel();
                         $route = $entity->getTripUpdate()->getTrip()->route_id;
+
+                        $uniqueId = $entity->id . '-' . $vehicle_id . "-" . $timestamp->toDateString();
+
+                        // We only want to process a trip_id once.
+                        if ($foundTripIds->contains($uniqueId)) {
+                            continue;
+                        }
+
+                        // Add it to the found trip Ids
+                        $foundTripIds->push($uniqueId);
 
                         //TODO removed the check if this is currently running on a real vehicle
 
