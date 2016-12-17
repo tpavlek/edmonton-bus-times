@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Model\Batch;
+use App\Model\DailyTrips;
+use App\Model\SequencedStop;
 use App\VehiclePositions;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -49,33 +51,55 @@ class ReprocessAll extends Command
      */
     public function handle()
     {
-        $this->output->writeln("<info>Writing vehicle positions...</info>");
-        collect($this->filesystem->disk('events')->allFiles())
-            ->filter(function ($name) {
-                return str_contains($name, 'positions');
-            })
-            ->each(function ($fileName) {
-                $positions = VehiclePositions::fromData($this->filesystem->disk('events')->get($fileName))
-                    ->allPositions();
-
-                \DB::table('vehicle_positions')->insert($positions->all());
-            });
-
         $foundTripIds = new Collection();
 
-        collect($this->filesystem->disk('events')->allFiles())
+        $this->output->writeln("<info>Processing events on disk...</info>");
+
+        $events = collect($this->filesystem->disk('events')->allFiles())
             ->filter(function ($name) {
                 return str_contains($name, 'updates');
             })
             ->sort()
-            ->reverse()
-            ->each(function ($tripFileName) use ($foundTripIds) {
+            ->reverse();
+
+        $this->output->writeln("<info>Beginning insert...</info>");
+
+        $dailyTrips = new DailyTrips();
+
+        $i = 0;
+
+        $readyToStart = false;
+
+        $events->each(function ($tripFileName) use ($foundTripIds, $dailyTrips, &$i, &$readyToStart) {
                 $timestamp = Carbon::createFromTimestamp(explode('-', $tripFileName)[0]);
+
+                if ($timestamp->hour == 4) {
+                    $readyToStart = true;
+                    if ($dailyTrips->isEmpty()) {
+                        return;
+                    }
+
+                    $recorded = $dailyTrips->saveDay();
+
+                    $this->output->writeln("Writing $recorded daily trips");
+
+                    return;
+                }
+
+                if (!$readyToStart) {
+                    return;
+                }
 
                 $feed = new \transit_realtime\FeedMessage();
                 $feed->parse($this->filesystem->disk('events')->get($tripFileName));
 
-                $batch = Batch::init();
+                $filenameParts = collect(explode('-', $tripFileName));
+
+                $uuid = $filenameParts
+                    ->slice(1, $filenameParts->count() - 2)
+                    ->implode('-');
+
+                $batch = Batch::query()->firstOrCreate([ 'id' => $uuid ]);
 
                 foreach($feed->getEntityList() as $entity) {
 
@@ -83,15 +107,11 @@ class ReprocessAll extends Command
                         $vehicle_id = $entity->getTripUpdate()->getVehicle()->getLabel();
                         $route = $entity->getTripUpdate()->getTrip()->route_id;
 
-                        $uniqueId = $entity->id . '-' . $vehicle_id . "-" . $timestamp->toDateString();
-
-                        // We only want to process a trip_id once.
-                        if ($foundTripIds->contains($uniqueId)) {
+                        if ($route != 4) {
                             continue;
                         }
 
-                        // Add it to the found trip Ids
-                        $foundTripIds->push($uniqueId);
+                        $sequence = $dailyTrips->init($entity->id);
 
                         //TODO removed the check if this is currently running on a real vehicle
 
@@ -104,37 +124,20 @@ class ReprocessAll extends Command
                             'updated_at' => $timestamp->toDateTimeString(),
                         ];
 
-                        $delays = collect($entity->getTripUpdate()->getStopTimeUpdate())
-                            ->map(function (StopTimeUpdate $stopTimeUpdate) use ($constant_data) {
-                                $result = [
-                                    'id' => Uuid::uuid4()->toString(),
-                                    'stop_id' => $stopTimeUpdate->getStopId(),
-                                    'depart_at' => null,
-                                    'depart_delay' => null,
-                                    'arrival_at' => null,
-                                    'arrival_delay' => null,
-                                ];
+                        collect($entity->getTripUpdate()->getStopTimeUpdate())
+                            ->each(function (StopTimeUpdate $stopTimeUpdate) use ($sequence, $timestamp, $constant_data) {
 
-                                if ($stopTimeUpdate->hasDeparture()) {
+                                $sequence->record($stopTimeUpdate, $timestamp, $constant_data);
 
-                                    $result['depart_at'] = Carbon::createFromTimestamp($stopTimeUpdate->getDeparture()->time)->toDateTimeString();
-                                    $result['depart_delay'] = $stopTimeUpdate->getDeparture()->delay ?? null;
-                                }
-
-                                if ($stopTimeUpdate->hasArrival()) {
-                                    $result['arrival_at'] = Carbon::createFromTimestamp($stopTimeUpdate->getArrival()->time)->toDateTimeString();
-                                    $result['arrival_delay'] = $stopTimeUpdate->getArrival()->delay ?? null;
-                                }
-
-                                return array_merge($constant_data, $result);
-                        });
-
-                        \DB::table('bus_times')->insert($delays->toArray());
-                        $this->output->writeln("<info>Inserted {$delays->count()} records!</info>");
+                            });
                     }
-
-
                 }
+
+                if ($i % 100 == 0) {
+                    $eggs = "true";
+                }
+
+                $i++;
 
             });
 

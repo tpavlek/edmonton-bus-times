@@ -39,6 +39,8 @@ class InitBusTable extends Migration
             $table->integer('stop_id');
             $table->integer('trip_id');
 
+            $table->integer('stop_sequence');
+
             $table->timestamps();
         });
 
