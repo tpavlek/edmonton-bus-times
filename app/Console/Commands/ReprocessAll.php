@@ -70,7 +70,10 @@ class ReprocessAll extends Command
 
         $readyToStart = false;
 
-        $events->each(function ($tripFileName) use ($foundTripIds, $dailyTrips, &$i, &$readyToStart) {
+        $totalFiles = $events->count();
+
+        $events->each(function ($tripFileName) use ($foundTripIds, $dailyTrips, &$i, &$readyToStart, $totalFiles) {
+                $i++;
                 $timestamp = Carbon::createFromTimestamp(explode('-', $tripFileName)[0]);
 
                 if ($timestamp->hour == 4) {
@@ -81,7 +84,7 @@ class ReprocessAll extends Command
 
                     $recorded = $dailyTrips->saveDay();
 
-                    $this->output->writeln("Writing $recorded daily trips");
+                    $this->output->writeln("Writing $recorded daily trips for {$timestamp->toDateString()}");
 
                     return;
                 }
@@ -107,10 +110,6 @@ class ReprocessAll extends Command
                         $vehicle_id = $entity->getTripUpdate()->getVehicle()->getLabel();
                         $route = $entity->getTripUpdate()->getTrip()->route_id;
 
-                        if ($route != 4) {
-                            continue;
-                        }
-
                         $sequence = $dailyTrips->init($entity->id);
 
                         //TODO removed the check if this is currently running on a real vehicle
@@ -134,10 +133,8 @@ class ReprocessAll extends Command
                 }
 
                 if ($i % 100 == 0) {
-                    $eggs = "true";
+                    $this->output->writeln("Processed $i of $totalFiles" . ($i / $totalFiles) . "%");
                 }
-
-                $i++;
 
             });
 

@@ -29,33 +29,29 @@
             mapTypeId: 'roadmap'
         });
 
-        var flightPath = new google.maps.Polyline({
-            path: window.times.ontime,
-            geodesic: true,
-            strokeColor: '#1e7005', // Green is for ontime
-            strokeOpacity: 1.0,
-            strokeWeight: 2
+        var paths = [];
+
+        var flightPlanCoordinates = [
+            {lat: 37.772, lng: -122.214},
+            {lat: 21.291, lng: -157.821},
+            {lat: -18.142, lng: 178.431},
+            {lat: -27.467, lng: 153.027}
+        ];
+
+        window.times.forEach(function (segment) {
+            var line = new google.maps.Polyline({
+                path: segment.values,
+                geodesic: true,
+                strokeColor: segment.color,
+                strokeOpacity: 0.7,
+                strokeWeight: 4
+            });
+            paths.push(line);
         });
 
-        var earlyMap = new google.maps.Polyline({
-            path: window.times.early,
-            geodesic: true,
-            strokeColor: '#68c1b7', // Cyan is early
-            strokeOpacity: 1.0,
-            strokeWeight: 2
+        paths.forEach(function (polyline) {
+            polyline.setMap(map);
         });
-
-        var lateMap = new google.maps.Polyline({
-            path: window.times.late,
-            geodesic: true,
-            strokeColor: '#af180e', // Red is late
-            strokeOpacity: 1.0,
-            strokeWeight: 2
-        });
-
-        flightPath.setMap(map);
-        earlyMap.setMap(map);
-        lateMap.setMap(map);
     }
 </script>
 
